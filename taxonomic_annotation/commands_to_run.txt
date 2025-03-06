@@ -1,0 +1,28 @@
+# data wrangling to get from the BSR output to taxonomic interpretable data
+# run commands below under in dir per gene
+# notebook to merge files in sub dirs
+
+for i in *bsr ; do awk '$3 >= 100 && $8 >= 0.9 {print $0}' $i | cut -f 2 | grep -v sseqid_db > "$i"_truepos ; done
+perl -p -i -e 's/(.+)_(\d+)/$1_$2\t$1/g' *truepos
+for i in *truepos ; do cut -f 2 $i > "$i"_genome ; done
+for i in *genome ; do while read line ; do grep -F $line /scratch/databases/protein_databases/GTDB_r207_GEM_tax >> "$i"_tax ; done < $i ; done
+
+for i in *tax ; do cat phylum_header > "$i"_phylum ; cut -f 3 $i | sort | uniq -c | sort -k 2 >> "$i"_phylum ; done
+perl -p -i -e 's/^ +//g' *phylum
+perl -p -i -e 's/ /\t/g' *phylum
+for i in *phylum ; do perl -p -i -e "s/count/count_${i:0:12}/g" $i ; done
+
+for i in *tax ; do cat class_header > "$i"_class ; cut -f 4 $i | sort | uniq -c | sort -k 2 >> "$i"_class ; done
+perl -p -i -e 's/^ +//g' *class
+perl -p -i -e 's/ /\t/g' *class
+for i in *class ; do perl -p -i -e "s/count/count_${i:0:12}/g" $i ; done
+
+for i in *tax ; do cat order_header > "$i"_order ; cut -f 5 $i | sort | uniq -c | sort -k 2 >> "$i"_order ; done
+perl -p -i -e 's/^ +//g' *order
+perl -p -i -e 's/ /\t/g' *order
+for i in *order ; do perl -p -i -e "s/count/count_${i:0:12}/g" $i ; done
+
+for i in *tax ; do cat family_header > "$i"_family ; cut -f 6 $i | sort | uniq -c | sort -k 2 >> "$i"_family ; done
+perl -p -i -e 's/^ +//g' *family
+perl -p -i -e 's/ /\t/g' *family
+for i in *family ; do perl -p -i -e "s/count/count_${i:0:12}/g" $i ; done
